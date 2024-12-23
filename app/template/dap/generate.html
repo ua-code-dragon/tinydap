@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %} DAP generator {% endblock %}
+
+{% block content %}
+    <div class="row mt-2"><div class="col-8 offset-2">
+        <div class="h-100 container-fluid d-flex flex-column">
+            <div class="mt-6 h6">Background generation processes</div>
+            <div >
+                <div class="mb-3 form-floating ">
+                    <input type="text" id="ilimit" class="form-control" placeholder="Limit objects count to generate" aria-label="Limit">
+                    <label for="ilimit">Objects limit</label>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="button" id="ilaunch" class="btn btn-primary">Launch generator</button>
+            </div>
+            <hr/>
+            <div id="status"></div>    
+    </div></div>
+    <script type="text/javascript">
+        $(window).on('load', () => {
+            $("#ilaunch").on('click',() => {
+                var lim = $("#ilimit").val();
+                var ilim = parseInt(lim);
+                if(isNaN(ilim)){
+                    bsalert("Invalid limit number","error");
+                    return;
+                }
+                if( ilim < 1 || ilim > 500 ){
+                    bsalert("Limit is limited {1,500}","error");
+                    return;
+                }
+                 $("#ilimit").val("");
+                $.ajax({
+                    url: '{{url_for("dap.listproc")}}',
+                    type: "GET",
+                    success: (res) => {
+                        if(Object.keys(res).length > 2){
+                            bsalert("Too many processes. Only 3 alowed now.","error");
+                            return;
+                        }else{
+                            $.ajax({
+                                url: '{{url_for("dap.spawnproc",limit=none)}}/'+lim,
+                                type: "GET",
+                                success: (res) => {
+                                    bsalert("Spawned: " + res.pid);
+                                },
+                                error: (xhr, ajaxOptions, thrownError) => {
+                                    console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                                }
+                            });
+                        }    
+                    },
+                    error: (xhr, ajaxOptions, thrownError) => {
+                        console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                    }
+
+                });
+            });
+            
+            const reprocess = () => {
+                $.ajax({
+                    url: '{{url_for("dap.listproc")}}',
+                    type: "GET",
+                    success: (res) => {
+                        $("#status").children("div[id]").each((i,n) => { 
+                            var iid = n.id; 
+                            if(iid !== undefined){
+                                iid = iid.replace('proc',''); 
+                                if(res[iid] === undefined){ 
+                                    console.log("rem  ", iid);
+                                    $("#proc"+iid).remove(); 
+                                }
+                            }                                    
+                        });
+                        for( var p in res ){
+                            if(document.getElementById("proc"+p) === null){
+                                $("#status").append(`
+                                    <div id ="proc`+p+`">
+                                    <div class="h6">`+p+`</div>
+                                    <div class="progress">
+                                        <div id="progress`+p+`" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-2">Users:   &nbsp; <code><mark><span id="nnu`+p+`"></span></mark></code></div>
+                                        <div class="col-2">Groups:  &nbsp; <code><mark><span id="nng`+p+`"></span></mark></code></div>
+                                        <div class="col-2">Documents: &nbsp; <code><mark><span id="nnd`+p+`"></span></mark></code></div>
+                                        <div class="col-2">Folders: &nbsp; <code><mark><span id="nnf`+p+`"></span></mark></code></div>
+                                        <div class="col-2">Rights: &nbsp; <code><mark><span id="nnr`+p+`"></span></mark></code></div>
+                                    </div>
+                                    </div>
+                                `);
+                            }
+                        }
+                        Object.keys(res).forEach((p) => {
+                            $.ajax({
+                                url: '{{url_for("dap.askproc",pid=null)}}/'+p,
+                                type: "GET",
+                                success: (res) => {
+                                    if(res.count !== undefined){
+                                        let pr = parseFloat(res.progress);
+                                        pr = Math.round((pr + Number.EPSILON) * 10) / 10;
+                                        if(pr > 96){
+                                            pr = 100;
+                                        }
+                                        let pb = $("#progress"+p);
+                                        pb.css("width",""+pr+"%");
+                                        pb.prop("aria-valuenow", pr);
+                                        pb.html(""+pr+"%");
+                                        $("#nnu"+p).text(res.count.user); 
+                                        $("#nng"+p).text(res.count.group); 
+                                        $("#nnd"+p).text(res.count.document); 
+                                        $("#nnf"+p).text(res.count.folder); 
+                                        $("#nnr"+p).text(res.count.right); 
+                                    }
+                                },
+                                error: (xhr, ajaxOptions, thrownError) => {
+                                    console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                                }
+                            });
+                        });    
+                    },
+                    error: (xhr, ajaxOptions, thrownError) => {
+                        console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                    }
+                });
+                
+            };
+
+            setInterval(reprocess, 1010);
+
+            $('body').tooltip({selector: '[data-bs-toggle="tooltip"]'});
+
+        });
+    </script>
+{% endblock %}

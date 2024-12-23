@@ -1,0 +1,90 @@
+
+{% extends "base.html" %}
+
+{% block title %} DAP effective rights {% endblock %}
+
+{% block content %}
+<div class="row mt-2"><div class="col-8 offset-2">
+    <div class="h-100 container-fluid d-flex flex-column">
+        <div class="h6 mt-3">Effective rights</div>
+        <div class="mb-3 form-floating input-group">
+        <input type="text" id="isubject" class="form-control" placeholder="Subject" aria-label="Subject">
+        <span class="input-group-text" id="dsubject"><i class="fa-solid fa-angle-down"></i></span>
+        <label for="isubject">Subject</label>
+        </div>
+        <select class="form-select visually-hidden" id="ssubject" size="3" aria-label="Random objects"> </select>
+        <div class="mb-3 form-floating input-group">
+        <input type="text" id="iobject" class="form-control" placeholder="Object" aria-label="Object">
+        <span class="input-group-text" id="dobject"><i class="fa-solid fa-angle-down"></i></span>
+        <label for="iobject">Object</label>
+        </div>
+        <select class="form-select visually-hidden" id="sobject" size="3" aria-label="Random objects"> </select>
+        <div class="mb-3">
+        <button id="brights" type="button" class="btn btn-outline-light">Calculate</button>
+        </div>
+        <hr/>
+        <code><pre id="rights" style="padding: 1em; min-height: 12em; color: lime; background-color: black;"><pre></code>
+</div></div>
+<script type="text/javascript">
+    $(window).on('load', () => {
+        $("#brights").on('click', () => {
+            let isub = ""+$("#isubject").val();
+            let iob = ""+$("#iobject").val();
+            let ok = true;
+            if(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(isub)){
+                bsalert("Invalid subject!", "error");
+                ok = false;
+            }
+            if(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(iob)){
+                bsalert("Invalid object!", "error");
+                ok = false;
+            }
+            if(ok){
+                var st = Date.now();
+                $.ajax({
+                    url: '{{url_for("dap.effectiverights",dapsubject="", dapobject="")}}/'+isub+"/"+iob,
+                    type: "GET",
+                    success: (res) => {
+                        var et = Date.now();
+                        var dt = et.valueOf() - st.valueOf();
+                        $("#rights").text(res.join("\n") + "\n-------------\nelapsed: "+dt+" msec.");
+                    },
+                    error: (xhr, ajaxOptions, thrownError) => {
+                        console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                    }
+
+                });
+            }
+        });
+        $("#dsubject,#dobject").on('click',(e) => {
+            $.ajax({
+                url: '{{url_for("dap.random",kind="RIGHTPAIR", limit=8)}}',
+                type: "GET",
+                success: (res) => {
+                    for(const r of res){
+                        $("#ssubject").append("<option value='"+r[0]+"'>"+r+"</option>");                        
+                        $("#sobject").append("<option value='"+r[1]+"'>"+r+"</option>");                        
+                    }
+                    $("#ssubject").removeClass("visually-hidden");
+                    $("#sobject").removeClass("visually-hidden");
+                },
+                error: (xhr, ajaxOptions, thrownError) => {
+                    console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                }
+
+            });
+        });
+        $("#ssubject").on('change',(e) => {
+            $("#isubject").val($("#ssubject").val());
+            $("#ssubject").empty();
+            $("#ssubject").addClass("visually-hidden");
+        });
+        $("#sobject").on('change',(e) => {
+            $("#iobject").val($("#sobject").val());
+            $("#sobject").empty();
+            $("#sobject").addClass("visually-hidden");
+        });
+        $('body').tooltip({selector: '[data-bs-toggle="tooltip"]'});
+    });
+</script>
+{% endblock %}

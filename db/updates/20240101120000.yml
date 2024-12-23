@@ -1,0 +1,13 @@
+#   REV is unique
+#   CONDITION query should return True or 'True' or 1 to apply update
+#   BODY to execute if CONDITION    
+
+REV: 20240101120000
+
+MEMO: Update template
+
+CONDITION:
+
+BODY: 
+
+

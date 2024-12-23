@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+    
+
+<div class="modal fade" id="loginBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="loginBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="loginBackdropLabel">Login</h5>
+      </div> 
+        <form action="{{ url_for('auth.login') }}" method="post" name="login_user_form" id="login_user_form">
+            <div class="modal-body">
+                    {{login_user_form.hidden_tag()}}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="ident" class="col-form-label">Identifier</label>
+                        </div>    
+                        <div class="col-9">
+                            {{login_user_form.ident(class="form-control", placeholder="Username, Email or Phone")}}
+                        </div>
+                    </div>    
+                    {% for error in login_user_form.errors.ident %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="password" class="col-form-label">Password</label>
+                        </div>    
+                        <div class="col-9">
+                            {{login_user_form.password( size=80, class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in login_user_form.errors.password %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-4 text-center">
+                            <div class="form-check form-check-inline">
+                            {{login_user_form.rememberme(class="form-check-input ml-2", disabled=true)}}
+                            <label for="rememberme" class="form-check-label">Remember me</label>
+                            </div>
+                        </div>    
+                        <div class="col-4 text-center">
+                            <a href="{{url_for('auth.restore')}}">Forgot password?</a>
+                        </div>    
+                        <div class="col-4 text-center">
+                            <a href="{{url_for('auth.register')}}">Not registered yet?</a>
+                        </div>
+                    </div>    
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.href='{{url_for('main.home')}}';">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    /* TODO: Obfuscate it. */
+    $(window).on('load', () => {
+        console.log({{login_user_form.errors}});
+        $("#login_user_form").submit((event) => {
+            event.preventDefault();
+            const tagstr = $("#ident").val() + ":" + $("#password").val();
+            doencrypt($("#tag1").val(), tagstr, (data) => {
+                $("#tag2").val(window.btoa(data));
+                $("#password").val(spoil($("#password").val()))
+                $("#ident").val(spoil($("#ident").val()))
+                event.currentTarget.submit();
+            });
+        });
+        $('#loginBackdrop').modal('show');
+    });
+</script>
+
+{% endblock content %}

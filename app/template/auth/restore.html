@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %} Restore password {% endblock %}
+
+{% block content %}
+    
+
+<div class="modal fade" id="restoreBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="restoreBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="restoreBackdropLabel">Restore password</h5>
+      </div> 
+        <form action="{{ url_for('auth.restore') }}" method="post" name="restore_user_form" id="restore_user_form">
+            <div class="modal-body">
+                    {{restore_user_form.hidden_tag()}}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="ident" class="col-form-label">Identifier</label>
+                        </div>    
+                        <div class="col-9">
+                            {{restore_user_form.ident(class="form-control", placeholder="Username, Email or Phone")}}
+                        </div>
+                    </div>    
+                    {% for error in restore_user_form.errors.ident %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="q" class="col-form-label">Question</label>
+                        </div>    
+                        <div class="col-9">
+                            {{restore_user_form.q( disabled=true, readonly=true, class="form-control" )}}
+                        </div>
+                    </div>    
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="a" class="col-form-label">Answer</label>
+                        </div>    
+                        <div class="col-9">
+                            {{restore_user_form.a(class="form-control", disabled=true )}}
+                        </div>
+                    </div>    
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.href='{{url_for('main.home')}}';">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    /* TODO: Obfuscate it. */
+    $(window).on('load', () => {
+        var qindex = -1;
+        $("#ident").on('focusout', (event) => {
+            let ident = $("#ident").val();
+            if(ident !== undefined && ident.length > 0){
+                $("#x").val("requiz");
+                doencrypt($("#tag1").val(), $("#ident").val(), (data) => {
+                    $("#tag2").val(window.btoa(data));
+                    $("#ident").val(spoil($("#ident").val()));
+                    $.ajax({
+                        url: '{{url_for("auth.restore")}}',
+                        type: "POST",
+                        data: $("#restore_user_form").serialize(),
+                        success: (res) => {
+                            $("#ident").val(ident);
+                            $("#q").val(res.q);
+                            $("#q").prop( "disabled", false );
+                            $("#a").prop( "disabled", false );
+                            qindex = res.i;
+                        },
+                        error: (xhr, ajaxOptions, thrownError) => {
+                            console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                        }
+                    });
+    
+                });
+            }
+        });
+        $("#restore_user_form").submit((event) => {
+            event.preventDefault();
+            $("#x").val("restore");
+            let tag = $("#ident").val()+":::"+qindex+":::"+$("#a").val();
+            doencrypt($("#tag1").val(), tag, (data) => {
+                $("#tag2").val(window.btoa(data));
+                $("#ident").val(spoil($("#ident").val()));
+                $("#q").val(spoil($("#q").val()));
+                $("#a").val(spoil($("#a").val()));
+                event.currentTarget.submit();
+            });
+        });
+        $('#restoreBackdrop').modal('show');
+    });
+</script>
+
+{% endblock content %}

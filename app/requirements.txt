@@ -1,0 +1,12 @@
+Flask
+Flask-Migrate
+Flask-SQLAlchemy
+Flask-Login
+Flask-Bcrypt
+gevent
+marshmallow
+pycryptodome
+bcrypt
+psycopg2
+wonderwords
+jsonpickle

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %} DAP subjects {% endblock %}
+
+{% block content %}
+<div class="row mt-2"><div class="col-8 offset-2">
+    <div class="h-100 container-fluid d-flex flex-column">
+        <div class="row">
+            <div class="h6 mt-4">
+            <hr/>
+            Groups
+            <hr/>
+            </div>
+            <table id="t_groups" class="display table table-dark table-hover table-sm table-striped" style="width:100%" >
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="50%">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <hr/>
+        <div class="h6 mt-2">Users<span id="groupdetail"></span></div>
+        <hr />
+        <div class="row">
+            <table id="t_users" class="display table table-dark table-hover table-sm table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="50%">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <hr />
+        <div class="h6 mt-2">Objects<span id="userdetail"></span></div>
+        <hr />
+        <div class="row">
+            <table id="t_objects" class="display table table-dark table-hover table-sm table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="30%">Name</th>
+                        <th width="20%">Rights</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></div>
+<script type="text/javascript">
+    var t_groups = null;
+    $(window).on('load', () => {
+        DataTable.ext.errMode = 'throw';
+
+        t_objects = new DataTable('#t_objects',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: true,
+            ordering: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            cache: false,
+            ajax: {
+                url: "{{url_for('dap.havings',kind='any')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                    {data: "id"        ,  title: "UUID"     , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                    {data: "kind"      , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                    {data: "name"      , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+                    {data: "rights"    , title: "Rights"    , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ]
+        });
+
+
+        t_users = new DataTable('#t_users',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: true,
+            ordering: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            cache: false,
+            ajax: {
+                url: "{{url_for('dap.users')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                    {data: "id"     ,  title: "UUID"      , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                    {data: "kind"    , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                    {data: "name"    , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ],
+            rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
+              $(row).attr('title', "Click to see user`s objects below");
+              $(row).attr('data-bs-toggle',"tooltip"); 
+              $(row).attr('data-bs-placement', "top");
+            }
+        });
+
+
+        t_groups = new DataTable('#t_groups',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            ajax: {
+                url: "{{url_for('dap.groups')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                {data: "id"     ,  title: "UUID"      , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                {data: "kind"    , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                {data: "name"    , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ],
+            rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
+              $(row).attr('title', "Click to see group users below");
+              $(row).attr('data-bs-toggle',"tooltip"); 
+              $(row).attr('data-bs-placement', "top");
+            }
+        });
+
+
+        t_groups.on('click','tr', function(e){
+            let data = t_groups.row(e.target).data();
+            let id = data['id'];
+            if(id == 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'){
+                id = 'nogroup'
+            }
+            $("#groupdetail").text(": group = "+id);
+            t_users.ajax.url("{{url_for('dap.users')}}/"+id).load();
+        });
+
+        t_users.on('click','tr', function(e){
+            let data = t_users.row(e.target).data();
+            let id = data['id'];
+            $("#userdetail").text(": user = "+id);
+            t_objects.ajax.url("{{url_for('dap.havings',kind='any')}}/"+id).load();
+        });
+
+        $('body').tooltip({selector: '[data-bs-toggle="tooltip"]'});
+
+    });
+</script>
+{% endblock %}

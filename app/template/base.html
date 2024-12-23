@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tiny DAP demo : {% block title %}{% endblock %} | Home</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/node-forge@1.0.0/dist/forge.min.js"></script>
+    <link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/js/all.min.js" integrity="sha512-1JkMy1LR9bTo3psH+H4SV5bO2dFylgOy+UJhMus1zF4VEFuZVu5lsi4I6iIndE4N9p01z1554ZDcvMSjMaqCBQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" rel="stylesheet" crossorigin="anonymous">
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js" crossorigin="anonymous"></script>
+    <style>
+        body { padding-top: 3rem; padding-bottom: 3rem; color: darkkhaki; --bs-body-font-size: 0.87rem; }
+        .navbar { box-shadow: 0px 8px 8px -6px rgba(0,0,0,.5); }
+        .nav-link { color: darkkhaki !important; }
+        .dt-container { font-size: 70%; }
+        .dt-input { margin-right: 1em; }
+        table.dataTable td { color: darkkhaki; }
+    </style>
+    <script defer>
+        const str2ab8 = str => {
+            const buf = new ArrayBuffer(str.length);
+            const bufView = new Uint8Array(buf);
+            for (let i = 0, strLen = str.length; i < strLen; i++) {
+                bufView[i] = str.charCodeAt(i);
+            }
+            return buf;
+        };
+        const ab2str8 = buf => {
+            return String.fromCharCode.apply(null, new Uint8Array(buf));
+        };
+        const str2ab16 = str => {
+            const buf = new ArrayBuffer(str.length*2);
+            const bufView = new Uint16Array(buf);
+            for (let i = 0, strLen = str.length; i < strLen; i++) {
+                bufView[i] = str.charCodeAt(i);
+            }
+            return buf;
+        };
+        const ab2str16 = buf => {
+            return String.fromCharCode.apply(null, new Uint16Array(buf));
+        };
+        const syncWait = ms => {
+            const end = Date.now() + ms
+            while (Date.now() < end) continue
+        };
+        const spoil = buf => {
+            if ( buf == undefined || buf.length < 1 ) {
+                return buf;
+            }    
+            let str = buf.split('');
+            let n = Math.floor(Math.random() * str.length * 2) + str.length;
+            for( let i = 0; i < n; i++){
+                str[Math.floor(Math.random() * str.length)] = String.fromCharCode(Math.floor(33 + Math.random() * 93));
+            }
+            return str.join('');
+        };
+        const doencrypt = (key, buf, callback) => {
+            // TODO: hardcoded cipher and chank length to be redefined
+            const sha256_digest_size = 32;
+            window.crypto.subtle.importKey(
+                "spki",
+                str2ab8(window.atob(key)), 
+                {
+                    name: "RSA-OAEP",
+                    hash: "SHA-256"
+                },
+                false,
+                ["encrypt"]
+            ).then( (keyobj) => {
+                let bsize = Math.ceil(keyobj.algorithm.modulusLength/8)  - 2 * sha256_digest_size - 2;
+                let abuf = buf.split('');
+                const chunks = [];
+                for ( chunk of [...Array(Math.ceil(abuf.length / bsize))].map(_ => abuf.splice(0,bsize)) ){
+                    chunks.push(
+                        window.crypto.subtle.encrypt(
+                            {
+                                name: "RSA-OAEP"
+                            }, 
+                            keyobj,
+                            str2ab8(chunk.join(''))
+                        )
+                    );                        
+                }
+                Promise.allSettled(chunks).then( (res) => {
+                    let rstr = res.map(r => ab2str8(r.value)).join('');
+                    console.log(rstr);
+                    callback(rstr);
+                }, e=>{console.log(e);});
+            }, e=>{console.log(e);});        
+        };
+        const bsalert = (msg, level) => {
+            if(level == undefined || level == ""){
+                level = 'info';
+            }else if (level == 'message'){
+                level = 'info';
+            }else if (level =='error'){
+                level = 'danger';
+            }
+            $("#bsalerts").append('<div class="alert alert-'+level+' alert-dismissible fade show" role="alert">'+msg+' <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+            $(".alert").delay(3000).slideUp(200, function () {
+                $(this).alert('close');
+            });
+        };
+        const formobject = (form) => {
+            const formData = new FormData(form);
+            return Array.from(formData.entries()).reduce((memo, [key, value]) => ({
+                ...memo,
+                [key]: value,
+            }), {});
+        };
+    </script>
+    {% block head %}{% endblock head %}
+</head>
+<body>
+    <header>
+    <nav class="navbar navbar-expand-md fixed-top bd-navbar bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">TinyDAP</span>
+            <button
+                data-mdb-collapse-init
+                class="navbar-toggler"
+                type="button"
+                data-mdb-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+            >
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li><a class="nav-link active" aria-current="page" href="{{url_for('main.home')}}">Home</a></li>
+                    <li><a class="nav-link" aria-current="page" href="{{url_for('dap.subjects')}}">Subjects</a></li>
+                    <li><a class="nav-link" aria-current="page" href="{{url_for('dap.objects')}}">Objects</a></li>
+                    <li><a class="nav-link" aria-current="page" href="{{url_for('dap.rights')}}">Rights</a></li>
+                    <li><a class="nav-link" aria-current="page" href="{{url_for('dap.generate')}}">Generate</a></li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if current_user.is_authenticated %}    
+                    <div class="px-3 me-4 fw-light" id="dapinfo"><strong>DAP counts: </strong></div>
+                    <a href="{{url_for('auth.profile')}}" class="btn btn-sm btn-dark px-3 me-3 active" tabindex="-1" role="button" aria-disabled="true"><i class="fa-solid fa-user"></i></a>
+                    <a href="{{url_for('auth.logout')}}" class="btn btn-sm btn-dark px-3 me-2 active" tabindex="-1" role="button" aria-disabled="true"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    </header>
+    <main>
+        {%block alerts %}
+            <div id="bsalerts" class="w100">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category,message in messages %}
+                        {% if category == 'message' %}
+                            {% set category = 'info' %}
+                        {% endif %}
+                        {% if category == 'error' %}
+                            {% set category = 'danger' %}
+                        {% endif %}
+                        <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            </div>
+        {% endblock %}
+        {% block content %}{% endblock content %}
+    </main>
+    <script type="text/javascript">
+        $(window).on('load', () => {
+            {% if current_user.is_authenticated %}    
+                const dapinfo = () => {
+                    $.ajax({
+                        url: '{{url_for("dap.info")}}',
+                        type: "GET",
+                        success: (res) => {
+                            for(const [key, value] of Object.entries(res)){
+                                let inspan = $("#dapinfo").find("#dapinfo_"+key);
+                                if(inspan.length == 0){
+                                    $("#dapinfo").append("<small class='mx-2' id=\"dapinfo_"+key+"\">"+key+": &nbsp; <code><mark>"+value+"</mark></code></small>");
+                                }else{
+                                    inspan.html(key+": &nbsp; <code><mark>"+value+"</mark></code>");
+                                }
+                            }
+                        },
+                        error: (xhr, ajaxOptions, thrownError) => {
+                            console.log(xhr.status, xhr.statusText, " : ", xhr.responseText);
+                        }
+                    });
+                };                
+                dapinfo();
+                setInterval(dapinfo,1300);
+            {% endif %}
+        });
+    </script>
+</body>
+</html>
+

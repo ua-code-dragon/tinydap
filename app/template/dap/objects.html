@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %} DAP objects {% endblock %}
+
+{% block content %}
+<div class="row mt-2"><div class="col-8 offset-2">
+    <div class="h-100 container-fluid d-flex flex-column">
+        <div class="row">
+            <div class="h6 mt-4">
+            <hr/>
+            Folders
+            <hr/>
+            </div>
+            <table id="t_folders" class="display table table-dark table-hover table-sm table-striped" style="width:100%" >
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="50%">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <hr/>
+        <div class="h6 mt-2">Documents<span id="folderdetail"></span></div>
+        <hr />
+        <div class="row">
+            <table id="t_documents" class="display table table-dark table-hover table-sm table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="50%">Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <hr />
+        <div class="h6 mt-2">Subjects<span id="docdetail"></span></div>
+        <hr />
+        <div class="row">
+            <table id="t_subjects" class="display table table-dark table-hover table-sm table-striped" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>UUID</th>
+                        <th>Kind</th>
+                        <th width="30%">Name</th>
+                        <th width="20%">Rights</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div></div>
+<script type="text/javascript">
+    var t_folders = null;
+    var t_documents = null;
+    var t_subjects = null;
+    $(window).on('load', () => {
+        DataTable.ext.errMode = 'throw';
+
+        t_subjects = new DataTable('#t_subjects',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: true,
+            ordering: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            cache: false,
+            ajax: {
+                url: "{{url_for('dap.shareholders',kind='any')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                    {data: "id"        ,  title: "UUID"     , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                    {data: "kind"      , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                    {data: "name"      , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+                    {data: "rights"    , title: "Rights"    , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ]
+        });
+
+
+        t_documents = new DataTable('#t_documents',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: true,
+            ordering: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            cache: false,
+            ajax: {
+                url: "{{url_for('dap.documents')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                    {data: "id"     ,  title: "UUID"      , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                    {data: "kind"    , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                    {data: "name"    , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ],
+            rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
+              $(row).attr('title', "Click to see shareholders below");
+              $(row).attr('data-bs-toggle',"tooltip"); 
+              $(row).attr('data-bs-placement', "top");
+            }
+        });
+
+
+        t_folders = new DataTable('#t_folders',{
+            responsive: true,
+            processing: true,
+            serverSide: true,
+            searching: false,
+            ordering: true,
+            order: [[4, "desc"]],
+            lengthMenu: [10, 20, 50, 100],
+            pageLength: 10,
+            ajax: {
+                url: "{{url_for('dap.folders')}}",
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                data: (d) => {
+                    return JSON.stringify(d);
+                },
+                dataFilter: (d) => {
+                    return d;
+                }
+            },
+            data: null,
+            columns: [
+                {data: "id"     ,  title: "UUID"      , searchable: false, sortable: false, className: "dt-left dt-head-left" },
+                {data: "kind"    , title: "Kind"      , searchable: false, sortable: false, className: "dt-center dt-head-center" },
+                {data: "name"    , title: "Name"      , searchable: false, sortable: false, className: "dt-left dt-head-center"  },
+            ],
+            rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
+              $(row).attr('title', "Click to see folder documents below");
+              $(row).attr('data-bs-toggle',"tooltip"); 
+              $(row).attr('data-bs-placement', "top");
+            }
+        });
+
+
+        t_folders.on('click','tr', function(e){
+            let data = t_folders.row(e.target).data();
+            let id = data['id'];
+            if(id == 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'){
+                id = 'nofolder'
+            }
+            $("#folderdetail").text(": folder = "+id);
+            t_documents.ajax.url("{{url_for('dap.documents')}}/"+id).load();
+        });
+
+        t_documents.on('click','tr', function(e){
+            let data = t_documents.row(e.target).data();
+            let id = data['id'];
+            $("#docdetail").text(": document = "+id);
+            t_subjects.ajax.url("{{url_for('dap.shareholders',kind='any')}}/"+id).load();
+        });
+
+        $('body').tooltip({selector: '[data-bs-toggle="tooltip"]'});
+
+    });
+</script>
+{% endblock %}

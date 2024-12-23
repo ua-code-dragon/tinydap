@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %} Edit Profile {% endblock %}
+
+{% block content %}
+    
+
+<div class="modal fade" id="profileBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="profileBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="profileBackdropLabel">Edit Profile</h5>
+      </div> 
+        <form action="{{ url_for('auth.profile') }}" method="post" name="profile_user_form" id="profile_user_form">
+            <div class="modal-body">
+                    {{profile_user_form.hidden_tag()}}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="username" class="col-form-label">Identifier</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.username(class="form-control disabled", disabled=true)}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.username %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="fullname" class="col-form-label">Full name</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.fullname(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.fullname %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="email" class="col-form-label">Email</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.email(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.email %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="phone" class="col-form-label">Phone</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.phone(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.phone %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="quiz1" class="col-form-label">Question 1</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.quiz1(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.quiz1 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="ans1" class="col-form-label">Answer 1</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.ans1(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.ans1 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="quiz2" class="col-form-label">Question 2</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.quiz2(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.quiz2 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="ans2" class="col-form-label">Answer 2</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.ans2(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.ans2 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="quiz3" class="col-form-label">Question 2</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.quiz3(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.quiz3 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="ans3" class="col-form-label">Answer 3</label>
+                        </div>    
+                        <div class="col-9">
+                            {{profile_user_form.ans3(class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in profile_user_form.errors.ans3 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <div class="me-auto"><a href="{{url_for('auth.chpass')}}">Change password</a></div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.href='{{url_for('main.home')}}';">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    /* TODO: Obfuscate it. */
+    $(window).on('load', () => {
+        $("#profile_user_form").submit((event) => {
+            event.preventDefault();
+            let tagobj = formobject(event.target); 
+            delete tagobj.tag1;
+            delete tagobj.tag2;
+            delete tagobj.csrf_token;
+            tagobj['ident'] = $("#username").val();
+            const tagstr = JSON.stringify(tagobj);
+            doencrypt($("#tag1").val(), tagstr, (data) => {
+                $("#tag2").val(window.btoa(data));
+                $("#ident").val(spoil($("#ident").val()));
+                $("#fullname").val(spoil($("#fullname").val()));
+                $("#quiz1").val(spoil($("#quiz1").val()));
+                $("#ans1").val(spoil($("#ans1").val()));
+                $("#quiz2").val(spoil($("#quiz2").val()));
+                $("#ans2").val(spoil($("#ans2").val()));
+                $("#quiz3").val(spoil($("#quiz3").val()));
+                $("#ans3").val(spoil($("#ans3").val()));
+                event.currentTarget.submit();
+            });
+        });
+        $('#profileBackdrop').modal('show');
+    });
+</script>
+
+{% endblock content %}

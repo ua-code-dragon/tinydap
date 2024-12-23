@@ -1,0 +1,8 @@
+
+{% extends "base.html" %}
+
+{% block title %} DAP objects {% endblock %}
+
+{% block content %}
+<div class="row mt-2"><div class="col-8 offset-2">
+    <div class="h-100 container-fluid d-flex flex-column">

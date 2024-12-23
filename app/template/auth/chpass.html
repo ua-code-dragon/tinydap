@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %} Change Password {% endblock %}
+
+{% block content %}
+    
+
+<div class="modal fade" id="chpassBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="chpassBackdropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="chpassBackdropLabel">Change Password</h5>
+      </div> 
+        <form action="{% if chpass_user_form.target == 'restore' %}{{ url_for('auth.restore') }}{% else %}{{ url_for('auth.chpass') }}{% endif %}" method="post" name="chpass_user_form" id="chpass_user_form">
+            <div class="modal-body">
+                    {{chpass_user_form.hidden_tag()}}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="password" class="col-form-label">Current password</label>
+                        </div>    
+                        <div class="col-9">
+                            {{chpass_user_form.password( size=80, class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in chpass_user_form.errors.password %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="password1" class="col-form-label">New password</label>
+                        </div>    
+                        <div class="col-9">
+                            {{chpass_user_form.password1( size=80, class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in chpass_user_form.errors.password1 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+                    <div class="row my-2 align-items-center">
+                        <div class="col-3">
+                            <label for="password2" class="col-form-label">Confirm password</label>
+                        </div>    
+                        <div class="col-9">
+                            {{chpass_user_form.password2( size=80, class="form-control")}}
+                        </div>
+                    </div>    
+                    {% for error in chpass_user_form.errors.password2 %}
+                        <span style="color: red;">[{{error}}]</span>
+                    {% endfor %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.href='{{url_for('main.home')}}';">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+    /* TODO: Obfuscate it. */
+    $(window).on('load', () => {
+        {% if chpass_user_form.target == 'restore' %}
+            $("#password").prop('disabled',true);
+        {% endif %}
+        console.log({{chpass_user_form.errors}});
+        $("#chpass_user_form").submit((event) => {
+            event.preventDefault();            
+            if( $("#password1").val() !== $("#password2").val()){
+                bsalert("Passwords doesn`t match","error"); 
+                return false;
+            }
+            const tagstr = $("#password").val() + ":::" + $("#password1").val() + ":::" + $("#password2").val();
+            doencrypt($("#tag1").val(), tagstr, (data) => {
+                $("#tag2").val(window.btoa(data));
+                $("#password").val(spoil($("#password").val()))
+                $("#password1").val(spoil($("#password1").val()))
+                $("#password2").val(spoil($("#password2").val()))
+                event.currentTarget.submit();
+            });
+        });
+        $('#chpassBackdrop').modal('show');
+    });
+</script>
+
+{% endblock content %}
