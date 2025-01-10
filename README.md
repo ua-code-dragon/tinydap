@@ -9,4 +9,5 @@ Here, we demonstrate the proof of concept of several approaches in backend desig
 
 3. A catalogue tree scheme inspired by DAP is demonstrated. The tree allows for the arbitrary nesting of users, groups, documents, and folders, as well as the arbitrary distribution and inheritance of rights.
 
+Test server: https://code.org.ua/code/tinydap
 
